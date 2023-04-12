@@ -5,6 +5,15 @@ import pymysql
 from pymysql.cursors import DictCursor
 import transfer_issues_to_pg
 import transfer_time_entries_to_pg
+import transfer_trackers_to_pg
+import transfer_developers_to_pg
+
+def print_all_redmine_users(mysqlcur):
+    mysqlcur.execute("select id, login, firstname, lastname from users order by id desc")
+
+    for row in mysqlcur:
+        print(row)
+
 
 if __name__ == "__main__":
     load_dotenv(dotenv_path="./credentials/redmine_mysql.env")
@@ -21,11 +30,19 @@ if __name__ == "__main__":
     )
     mysqlcur = mysqlconn.cursor()
 
+    transfer_trackers_to_pg.migrate(pgcur, mysqlcur)
+    pgconn.commit()
+
     transfer_issues_to_pg.migrate(pgcur, mysqlcur)
     pgconn.commit()
 
     transfer_time_entries_to_pg.migrate(pgcur, mysqlconn)
     pgconn.commit()
+
+    transfer_developers_to_pg.migrate(pgcur, mysqlcur)
+    pgconn.commit()
+
+    # print_all_redmine_users(mysqlcur)
 
     pgcur.close()
     pgconn.close()
